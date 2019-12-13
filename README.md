@@ -4,7 +4,9 @@ A Clojure library designed to ... well, that part is up to you.
 
 ## Usage
 
-FIXME
+Create a new config file and update its values:
+
+    $ mv lein-env.sample .lein-env
 
 ## License
 
