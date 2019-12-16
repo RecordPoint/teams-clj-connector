@@ -1,60 +1,43 @@
 (ns teams-connector-clj.core)
 
 (comment
-  (require '[clj-http.client :as http]
-           '[cheshire.core   :as json]
-           '[clojure.pprint  :refer [pprint] :rename {pprint p}]
-           '[environ.core    :refer [env]])
-  
+  (require '[clj-http.client        :as    http]
+           '[cheshire.core          :as    json]
+           '[clojure.pprint         :refer [pprint] :rename {pprint p}]
+           '[environ.core           :refer [env]]
+           '[clojure.spec.alpha     :as    s]
+           '[camel-snake-kebab.core :as    csk])
 
-  (import  '(java.time ZonedDateTime ZoneId)
-           '(java.time.format DateTimeFormatter))
-
-  (def oauth-params {:grant_type    "client_credentials"
-                     :client_id     (env :client-id)
-                     :client_secret (env :client-secret)
-                     :resource      (env :audience)})
-
-  (def token-resp (http/post (env :oauth-endpoint)
-                             {:form-params oauth-params}))
-
-  (def access-token (-> token-resp
-                        :body
-                        (json/parse-string true)
-                        :access_token))
+  (import  '(java.time ZonedDateTime ZoneId))
+  (require '[teams-connector-clj.record :as r])
+  (require '[teams-connector-clj.r365   :as r365])
+  (require '[teams-connector-clj.oauth  :as oauth])
 
 
-  (def formatter     (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+
+
+  (def token (oauth/request-token))
+
   (def formatted-now (-> (ZonedDateTime/now (ZoneId/of "UTC"))
-                         (.format formatter)))
+                         (.format r/formatter)))
+
+  (def record (r/record {:source-last-modified-by   formatted-now,
+                         :content-version           "v0.2",
+                         :mime-type                 "text/plain",
+                         :parent-external-id        "444",
+                         :source-last-modified-date formatted-now,
+                         :title                     "My first record",
+                         :author                    "Leonardo Borges",
+                         :source-created-by         "Leonardo Borges",
+                         :source-created-date       formatted-now,
+                         :external-id               "777",
+                         :connector-id             (env :connector-id),
+                         :location                 "/",
+                         :media-type               "Electronic"}))
 
 
-  (def record {
-               "externalId"             "333",
-               "parentExternalId"       "222",
-               "connectorId"            (env :connector-id),
-               "title"                  "My first record",
-               "author"                 "Leonardo Borges",
-               "mimeType"               "text/plain",
-               "sourceLastModifiedDate" formatted-now,
-               "sourceLastModifiedBy"   formatted-now,
-               "sourceCreatedDate"      formatted-now,
-               "sourceCreatedBy"        "Leonardo Borges",
-               "contentVersion"         "v0.1",
-               "location"               "/",
-               "mediaType"              "Electronic"
-               })
-
-  ;(p record)
 
 
-  (def submit-resp (http/post (str (env :connector-endpoint) "/items")
-                              {:content-type  :json
-                               :accept        :json
-                               :oauth-token   access-token
-                               :form-params   record}))
-
-  (p (-> submit-resp :body (json/parse-string true)))
-
+  (r365/submit-record record token)
 
   )

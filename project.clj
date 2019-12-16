@@ -6,5 +6,6 @@
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [clj-http "3.10.0"]
                  [cheshire "5.9.0"]
-                 [environ "1.1.0"]]
+                 [environ "1.1.0"]
+                 [camel-snake-kebab "0.4.1"]]
   :repl-options {:init-ns teams-connector-clj.core})
