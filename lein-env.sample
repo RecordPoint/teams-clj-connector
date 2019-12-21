@@ -1,8 +1,10 @@
 {
- :client_id          "xxxx"
- :client_secret      "xxxx"
+ :client_id          "xxx"
+ :client_secret      "xxx"
+ :connector-id       "xxx" 
  :audience           "https://rpfabricuat.onmicrosoft.com/rpfabric"
+ :connector-endpoint "https://connector-uat.eigerio.space/connector/api" 
  :oauth-endpoint     "https://login.microsoftonline.com/TENANT_ID/oauth2/token"
- :connector-endpoint "https://connector-uat.eigerio.space/connector/api"
- :connector-id       "xxxx"
+ :oauth-endpoint-v2  "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
+ :graph-api-endpoint "https://graph.microsoft.com"
  }
