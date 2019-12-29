@@ -7,4 +7,5 @@
  :oauth-endpoint     "https://login.microsoftonline.com/TENANT_ID/oauth2/token"
  :oauth-endpoint-v2  "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
  :graph-api-endpoint "https://graph.microsoft.com"
+ :api-port           "8000"
  }

@@ -2,7 +2,9 @@
   (:require [compojure.core    :refer :all]
             [compojure.route   :as route]
             [compojure.handler :as handler]
-            [ring.util.response :refer [response header status]]))
+            [environ.core      :refer [env]]
+            [ring.util.response :refer [response header status]])
+  (:use ring.adapter.jetty))
 
 
 (defroutes api-routes
@@ -17,5 +19,11 @@
 
 
 (defroutes app
+  (GET "/healthcheck" [] (response "Ok."))
   (handler/api api-routes)
   (route/not-found "<h1>Page not found</h1>"))
+
+
+(defn -main
+  [& args]
+  (run-jetty app {:port (Integer/parseInt (env :api-port))}))

@@ -10,7 +10,9 @@
                  [camel-snake-kebab "0.4.1"]
                  [compojure "1.6.1"]
                  [ring/ring-mock "0.4.0"]
-                 [javax.servlet/servlet-api "2.5"]]
+                 [javax.servlet/servlet-api "2.5"]
+                 [ring/ring-jetty-adapter "1.8.0"]]
+  :main          teams-connector-clj.core
   :profiles {:test {:dependencies
                     [[ring/ring-mock "0.4.0"]]}}
   :repl-options {:init-ns teams-connector-clj.core})
