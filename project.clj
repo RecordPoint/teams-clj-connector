@@ -11,7 +11,8 @@
                  [compojure "1.6.1"]
                  [ring/ring-mock "0.4.0"]
                  [javax.servlet/servlet-api "2.5"]
-                 [ring/ring-jetty-adapter "1.8.0"]]
+                 [ring/ring-jetty-adapter "1.8.0"]
+                 [com.taoensso/timbre "4.10.0"]]
   :main          teams-connector-clj.core
   :profiles {:test {:dependencies
                     [[ring/ring-mock "0.4.0"]]}}
