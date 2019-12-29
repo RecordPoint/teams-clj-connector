@@ -7,5 +7,10 @@
                  [clj-http "3.10.0"]
                  [cheshire "5.9.0"]
                  [environ "1.1.0"]
-                 [camel-snake-kebab "0.4.1"]]
+                 [camel-snake-kebab "0.4.1"]
+                 [compojure "1.6.1"]
+                 [ring/ring-mock "0.4.0"]
+                 [javax.servlet/servlet-api "2.5"]]
+  :profiles {:test {:dependencies
+                    [[ring/ring-mock "0.4.0"]]}}
   :repl-options {:init-ns teams-connector-clj.core})
