@@ -12,3 +12,14 @@
         (header "content-type" "text/plain")
         (status 400))))
 
+(defn handle-graph-subscription-notification [payload validation-token]
+  (cond
+    (and (nil? payload)
+         (nil? validation-token)) (-> (response "Bad request")
+                                      (header "content-type" "text/plain")
+                                      (status 400))
+    validation-token              (-> (response validation-token)
+                                      (header "content-type" "text/plain"))
+    payload                       (-> (response "Accepted")
+                                      (header "content-type" "text/plain")
+                                      (status 202))))

@@ -4,17 +4,22 @@
             [compojure.handler :as handler]
             [environ.core      :refer [env]]
             [ring.util.response :refer [response header status]]
+            [ring.middleware.json :refer [wrap-json-body]]
             [taoensso.timbre :as timbre :refer [info debug error]]
-            [teams-connector-clj.api :as api])
+            [teams-connector-clj.api :as api]
+            [cheshire.core          :as    json])
   (:use ring.adapter.jetty))
 
 (defroutes api-routes
   (context "/api/graph/subscriptions" []
-           (POST "/notifications" [validationToken] (api/validate-graph-token validationToken))))
+           (POST "/notifications" [validationToken :as {body :body}]
+                 (api/handle-graph-subscription-notification body validationToken))))
+
+(def app-routes (-> (handler/api api-routes) wrap-json-body))
 
 (defroutes app
   (GET "/healthcheck" [] (response "Ok."))
-  (handler/api api-routes)
+  app-routes
   (route/not-found "<h1>Page not found</h1>"))
 
 (defn -main

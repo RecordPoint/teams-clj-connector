@@ -9,9 +9,10 @@
                  [environ "1.1.0"]
                  [camel-snake-kebab "0.4.1"]
                  [compojure "1.6.1"]
-                 [ring/ring-mock "0.4.0"]
                  [javax.servlet/servlet-api "2.5"]
+                 [ring/ring-json "0.5.0"]
                  [ring/ring-jetty-adapter "1.8.0"]
+                 [ring/ring-mock "0.4.0"]
                  [com.taoensso/timbre "4.10.0"]]
   :main          teams-connector-clj.core
   :profiles {:test {:dependencies
