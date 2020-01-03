@@ -1,9 +1,6 @@
 (ns teams-connector-clj.record
-  (:require [clojure.spec.alpha :as s])
-  (:import  [java.time.format DateTimeFormatter]))
-
-(def formatter         (DateTimeFormatter/ofPattern "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
-(def date-time-pattern (re-pattern "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z"))
+  (:require [clojure.spec.alpha :as s]
+            [teams-connector-clj.util :refer [date-time-formatter date-time-pattern]]))
 
 (s/def ::content-version           string?)
 (s/def ::mime-type                 string?)
@@ -34,9 +31,21 @@
                                  ]
                         :opt []))
 
-
 (defn record [record-map]
   (if (= (s/conform ::record record-map) ::s/invalid)
     (throw (ex-info "Invalid input" (s/explain-data ::record record-map)))
     record-map))
 
+
+(s/def ::item-external-id               string?)
+(s/def ::binary-external-id             string?)
+
+(s/def ::binary (s/keys :req-un [::connector-id
+                                 ::item-external-id
+                                 ::binary-external-id]
+                        :opt []))
+
+(defn binary [binary-map]
+  (if (= (s/conform ::binary binary-map) ::s/invalid)
+    (throw (ex-info "Invalid input" (s/explain-data ::binary binary-map)))
+    binary-map))
