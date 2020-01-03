@@ -28,3 +28,14 @@
                 :form-params   record})))
 
 
+(defn submit-binary [metadata binary access-token]
+  (let [query-params (->> metadata
+                    (map (fn [[k v]] [(csk/->camelCaseString k) v]))
+                    (into {}))]
+    (http/post (str (env :connector-endpoint) "/binaries")
+               {:debug true
+                :content-type  "application/octet-stream"
+                :accept        :json
+                :oauth-token   access-token
+                :query-params  query-params
+                :form-params   binary})))
