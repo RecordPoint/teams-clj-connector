@@ -15,11 +15,11 @@
            (POST "/notifications" [validationToken :as {body :body}]
                  (api/handle-graph-subscription-notification body validationToken))))
 
-(def app-routes (-> (handler/api api-routes) wrap-json-body))
-
 (defroutes app
+  (->  api-routes
+       handler/api
+       wrap-json-body)
   (GET "/healthcheck" [] (response "Ok."))
-  app-routes
   (route/not-found "<h1>Page not found</h1>"))
 
 (defn -main
