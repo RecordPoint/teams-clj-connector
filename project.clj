@@ -14,7 +14,7 @@
                  [ring/ring-jetty-adapter "1.8.0"]
                  [ring/ring-mock "0.4.0"]
                  [com.taoensso/timbre "4.10.0"]
-                 [com.leonardoborges/imminent "0.2.0"]
+                 [com.leonardoborges/imminent "0.2.1-SNAPSHOT"]
                  [expectations/clojure-test "1.2.1"]
                  [buddy "2.0.0"]]
   :main          teams-connector-clj.core

@@ -81,19 +81,22 @@
                    messages))
 
 (defn ingest-channel [team-id channel-id]
-  (immi/mdo [[token rtoken]          (immi/sequence [(graph/request-token)
-                                                     (r365/request-token)])
+  (-> (immi/mdo [[token rtoken]          (immi/sequence [(graph/request-token)
+                                                         (r365/request-token)])
 
-             _                       (graph/subscribe-to-channel team-id channel-id token)
+                 _                       (graph/subscribe-to-channel team-id channel-id token)
 
-             [messages team channel] (immi/sequence [(graph/messages team-id channel-id token)
-                                                     (graph/team team-id token)
-                                                     (graph/channel team-id channel-id token)])
+                 [messages team channel] (immi/sequence [(graph/messages team-id channel-id token)
+                                                         (graph/team team-id token)
+                                                         (graph/channel team-id channel-id token)])
 
-             messages                (enrich-messages messages team-id channel-id token)]
+                 messages                (enrich-messages messages team-id channel-id token)]
 
-            (immi/map-future #(submit-record team channel % rtoken)
-                             messages)))
+                (immi/map-future #(submit-record team channel % rtoken)
+                                 messages))
+      (immi/on-failure #(error % (format "Failed to ingest channel '%s'" channel-id)))))
+
+
 
 
 
