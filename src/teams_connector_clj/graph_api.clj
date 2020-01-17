@@ -83,24 +83,27 @@
                           token)))
 
 (defn subscribe-to-channel [team-id channel-id token]
-  (immi/future
-    (http/post (graph-uri "/beta/subscriptions")
-               {:content-type  :json
-                :accept        :json
-                :oauth-token token
-                :form-params {:changeType          "created,updated"
-                              :notificationUrl     "https://6d8e4828.ngrok.io/api/graph/subscriptions/notifications"
-                              :resource            (format  "/teams/%s/channels/%s/messages" team-id channel-id)
-                              :expirationDateTime  (.format  (.plusMinutes (LocalDateTime/now (ZoneId/of "UTC")) 10)
-                                                             date-time-formatter)
-                              :clientState         "optional"
+  (-> (immi/future
+        (http/post (graph-uri "/beta/subscriptions")
+                   {:content-type  :json
+                    :accept        :json
+                    :oauth-token token
+                    :form-params {:changeType          "created,updated"
+                                  :notificationUrl     "https://6d8e4828.ngrok.io/api/graph/subscriptions/notifications"
+                                  :resource            (format  "/teams/%s/channels/%s/messages" team-id channel-id)
+                                  :expirationDateTime  (.format  (.plusMinutes (LocalDateTime/now (ZoneId/of "UTC")) 10)
+                                                                 date-time-formatter)
+                                  :clientState         "optional"
 
-                              :encryptionCertificate	(-> (keys/public-key (io/resource "cert.pem"))
-                                                          (.getEncoded)
-                                                          b64-codec/encode
-                                                          (String.))
-                              :encryptionCertificateId	"teamsCert"
-                              }})))
+                                  :encryptionCertificate	(-> (keys/public-key (io/resource "cert.pem"))
+                                                              (.getEncoded)
+                                                              b64-codec/encode
+                                                              (String.))
+                                  :encryptionCertificateId	"teamsCert"
+                                  }}))
+      (immi/on-failure #(error % (format "Failed to subscribe to channel '%s'" channel-id)))
+      (immi/on-success (fn [_]
+                         (info (format "Successfully subscribed to channel '%s'" channel-id))))))
 
 
 

@@ -50,12 +50,13 @@
   (let [{team-id    "teams"
          channel-id "channels"
          message-id "messages"} (graph/parse-resource-uri resource-uri)]
-    (immi/mdo [message   (graph/message team-id channel-id message-id token)
-               replies   (graph/replies team-id channel-id message-id token)
-               team      (graph/team team-id token)
-               channel   (graph/channel team-id channel-id token)
-               rtoken    (r365/request-token)]
-              (submit-record team channel (assoc message :replies replies) rtoken))))
+    (-> (immi/sequence [(graph/message team-id channel-id message-id token)
+                        (graph/replies team-id channel-id message-id token)
+                        (graph/team team-id token)
+                        (graph/channel team-id channel-id token)
+                        (r365/request-token)])
+        (immi/map (fn [[message replies team channel rtoken]]
+                    (submit-record team channel (assoc message :replies replies) rtoken))))))
 
 
 (defn handle-graph-subscription-notification [payload token]
