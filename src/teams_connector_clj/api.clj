@@ -36,64 +36,64 @@
                :item-external-id    external-id
                :binary-external-id  (str "chatjson-" external-id)})))
 
-(defn submit-record [team channel message rtoken]
-  (immi/mdo [_ (r365/submit-record (message->record team channel message) rtoken)
+(defn submit-record [team channel message rp-token]
+  (immi/mdo [_ (r365/submit-record (message->record team channel message) rp-token)
              _ (immi/future (Thread/sleep 5000))
-             _ (r365/submit-binary (message->binary team channel message) message rtoken)]
+             _ (r365/submit-binary (message->binary team channel message) message rp-token)]
             (do
               (info (format "Message '%s' submitted" (:id message)))
               (immi/const-future :ok))))
 
 (defn process-subscription-event [{type         "changeType"
                                    resource-uri "resource"
-                                   :as event} token]
+                                   :as event} graph-token]
   (let [{team-id    "teams"
          channel-id "channels"
          message-id "messages"} (graph/parse-resource-uri resource-uri)]
-    (-> (immi/sequence [(graph/message team-id channel-id message-id token)
-                        (graph/replies team-id channel-id message-id token)
-                        (graph/team team-id token)
-                        (graph/channel team-id channel-id token)
-                        (r365/request-token)])
-        (immi/map (fn [[message replies team channel rtoken]]
-                    (submit-record team channel (assoc message :replies replies) rtoken))))))
+    (immi/mdo [[message replies team
+                channel rp-token]      (immi/sequence [(graph/message team-id channel-id message-id graph-token)
+                                                       (graph/replies team-id channel-id message-id graph-token)
+                                                       (graph/team team-id graph-token)
+                                                       (graph/channel team-id channel-id graph-token)
+                                                       (r365/request-token)])]
+              (submit-record team channel (assoc message :replies replies) rp-token))))
 
 
-(defn handle-graph-subscription-notification [payload token]
+(defn handle-graph-subscription-notification [payload graph-token]
   (cond
     (and (nil? payload)
-         (nil? token)) (-> (response "Bad request")
-                           (header "content-type" "text/plain")
-                           (status 400))
-    token              (do (info (str "Subscription validation request: " token))
-                           (-> (response token)
-                               (header "content-type" "text/plain")))
+         (nil? graph-token)) (-> (response "Bad request")
+                                 (header "content-type" "text/plain")
+                                 (status 400))
+    graph-token              (do (info (str "Subscription validation request: " graph-token))
+                                 (-> (response graph-token)
+                                     (header "content-type" "text/plain")))
     payload            (do
-                         (immi/mdo [token (graph/request-token)]
-                                   (process-subscription-event (-> (payload "value") first) token))
+                         (immi/mdo [graph-token (graph/request-token)]
+                                   (process-subscription-event (-> (payload "value") first) graph-token))
                          (-> (response "Accepted")
                              (header "content-type" "text/plain")
                              (status 202)))))
 
-(defn enrich-messages [messages team-id channel-id token]
+(defn enrich-messages [messages team-id channel-id graph-token]
   (immi/map-future (fn [message]
-                     (-> (graph/replies team-id channel-id (:id message) token)
+                     (-> (graph/replies team-id channel-id (:id message) graph-token)
                          (immi/map #(assoc message :replies %))))
                    messages))
 
 (defn ingest-channel [team-id channel-id]
-  (-> (immi/mdo [[token rtoken]          (immi/sequence [(graph/request-token)
-                                                         (r365/request-token)])
+  (-> (immi/mdo [[graph-token rp-token]          (immi/sequence [(graph/request-token)
+                                                                 (r365/request-token)])
 
-                 _                       (graph/subscribe-to-channel team-id channel-id token)
+                 _                       (graph/subscribe-to-channel team-id channel-id graph-token)
 
-                 [messages team channel] (immi/sequence [(graph/messages team-id channel-id token)
-                                                         (graph/team team-id token)
-                                                         (graph/channel team-id channel-id token)])
+                 [messages team channel] (immi/sequence [(graph/messages team-id channel-id graph-token)
+                                                         (graph/team team-id graph-token)
+                                                         (graph/channel team-id channel-id graph-token)])
 
-                 messages                (enrich-messages messages team-id channel-id token)]
+                 messages                (enrich-messages messages team-id channel-id graph-token)]
 
-                (immi/map-future #(submit-record team channel % rtoken)
+                (immi/map-future #(submit-record team channel % rp-token)
                                  messages))
       (immi/on-failure #(error % (format "Failed to ingest channel '%s'" channel-id)))))
 
