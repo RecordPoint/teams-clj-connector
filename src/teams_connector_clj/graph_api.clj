@@ -16,6 +16,13 @@
                    :client_secret (env :client-secret)
                    :scope         "https://graph.microsoft.com/.default"})
 
+
+(defn- json-key-fn [k]
+  (let [k (if (.startsWith k "@odata")
+            (->  k (clojure.string/replace #"@odata\." "odata-"))
+            k)]
+    (csk/->kebab-case-keyword k)))
+
 (defn- graph-uri [path & params]
   (let [endpoint (str (env :graph-api-endpoint) path)]
     (apply format endpoint params)))
@@ -26,17 +33,16 @@
                  :accept        :json
                  :oauth-token   token})
       :body
-      (json/parse-string (fn [k]
-                           (let [k (if (.startsWith k "@odata")
-                                     (->  k (clojure.string/replace #"@odata\." "odata-"))
-                                     k)]
-                             (csk/->kebab-case-keyword k))))))
+      (json/parse-string json-key-fn)))
+
+(defn- graph-post [uri req]
+  (-> (http/post (env :oauth-endpoint-v2) req)
+      :body
+      (json/parse-string json-key-fn)))
 
 
 (defn request-token []
-  (immi/future (-> (http/post (env :oauth-endpoint-v2) {:form-params oauth-params})
-                   :body
-                   (json/parse-string true)
+  (immi/future (-> (graph-post (env :oauth-endpoint-v2) {:form-params oauth-params})
                    :access_token)))
 
 (defn team [team-id token]
@@ -83,28 +89,25 @@
                           token)))
 
 (defn subscribe-to-channel [team-id channel-id token]
-  (-> (immi/future
-        (http/post (graph-uri "/beta/subscriptions")
-                   {:content-type  :json
-                    :accept        :json
-                    :oauth-token token
-                    :form-params {:changeType          "created,updated"
-                                  :notificationUrl     "https://6d8e4828.ngrok.io/api/graph/subscriptions/notifications"
-                                  :resource            (format  "/teams/%s/channels/%s/messages" team-id channel-id)
-                                  :expirationDateTime  (.format  (.plusMinutes (LocalDateTime/now (ZoneId/of "UTC")) 10)
-                                                                 date-time-formatter)
-                                  :clientState         "optional"
+  (let [params      {:content-type  :json
+                     :accept        :json
+                     :oauth-token   token
+                     :form-params   {:changeType          "created,updated"
+                                     :notificationUrl     "https://6d8e4828.ngrok.io/api/graph/subscriptions/notifications"
+                                     :resource            (format  "/teams/%s/channels/%s/messages" team-id channel-id)
+                                     :expirationDateTime  (.format  (.plusMinutes (LocalDateTime/now (ZoneId/of "UTC")) 5)
+                                                                    date-time-formatter)
+                                     :clientState         "optional"
 
-                                  :encryptionCertificate	(-> (keys/public-key (io/resource "cert.pem"))
-                                                              (.getEncoded)
-                                                              b64-codec/encode
-                                                              (String.))
-                                  :encryptionCertificateId	"teamsCert"
-                                  }}))
-      (immi/on-failure #(error % (format "Failed to subscribe to channel '%s'" channel-id)))
-      (immi/on-success (fn [_]
-                         (info (format "Successfully subscribed to channel '%s'" channel-id))))))
-
+                                     :encryptionCertificate	(-> (keys/public-key (io/resource "cert.pem"))
+                                                                (.getEncoded)
+                                                                b64-codec/encode
+                                                                (String.))
+                                     :encryptionCertificateId	"teamsCert"}}]
+    (-> (immi/future  (graph-post (graph-uri "/beta/subscriptions") params))
+        (immi/on-failure #(error % (format "Failed to subscribe to channel '%s'" channel-id)))
+        (immi/on-success (fn [_]
+                           (info (format "Successfully yyy subscribed to channel '%s'" channel-id)))))))
 
 
 (def  resource-id-pattern #"(.+)\('(.+)'\)")
