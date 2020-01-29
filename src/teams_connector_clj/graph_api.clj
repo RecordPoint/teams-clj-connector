@@ -36,14 +36,14 @@
       (json/parse-string json-key-fn)))
 
 (defn- graph-post [uri req]
-  (-> (http/post (env :oauth-endpoint-v2) req)
+  (-> (http/post uri req)
       :body
       (json/parse-string json-key-fn)))
 
 
 (defn request-token []
   (immi/future (-> (graph-post (env :oauth-endpoint-v2) {:form-params oauth-params})
-                   :access_token)))
+                   :access-token)))
 
 (defn team [team-id token]
   (immi/future (graph-get (graph-uri "/v1.0/teams/%s" team-id)
@@ -107,7 +107,7 @@
     (-> (immi/future  (graph-post (graph-uri "/beta/subscriptions") params))
         (immi/on-failure #(error % (format "Failed to subscribe to channel '%s'" channel-id)))
         (immi/on-success (fn [_]
-                           (info (format "Successfully yyy subscribed to channel '%s'" channel-id)))))))
+                           (info (format "Successfully subscribed to channel '%s'" channel-id)))))))
 
 
 (def  resource-id-pattern #"(.+)\('(.+)'\)")
